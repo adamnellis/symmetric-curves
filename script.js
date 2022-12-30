@@ -40,35 +40,53 @@ function main() {
   const interpolation_resolution = 100  // number of time steps animating between each curve end point
   const interpolation_timestep = 100  // milliseconds between each animation frame
   
-  // Create initial curve end points
-  let curve_1 = null
-  let curve_2 = makeCurve(steps, dimensions, decay)
+  // Create initial curve control points
+  let point_1 = null
+  let point_2 = makeCurve(steps, dimensions, decay)
+  let point_3 = makeCurve(steps, dimensions, decay)
+  let point_4 = makeCurve(steps, dimensions, decay)
   
+  // Start animation loop
   let animation_frame = interpolation_resolution
-  
   const animation_handle = setInterval(function() {
     
-    // If we've reached a curve end point, then generate a new one
+    // If we've reached a control point, then generate a new one
     if (animation_frame >= interpolation_resolution) {
-      curve_1 = curve_2
-      curve_2 = makeCurve(steps, dimensions, decay)
+      point_1 = point_2
+      point_2 = point_3
+      point_3 = point_4
+      point_4 = makeCurve(steps, dimensions, decay)
       animation_frame = -1
     }
     
-    // Move to the next frame in the interpolation between the two end points
+    // Move to the next frame in the interpolation
     animation_frame += 1
-    const lerp_t = animation_frame / interpolation_resolution
+    const t = animation_frame / interpolation_resolution
+    const t_2 = t * t
+    const t_3 = t_2 * t
 	  
     // Calculate points on interpolated curve
     const z_real_points = []
     const z_imaginary_points = []
     for (let theta_i=0; theta_i<theta_resolution; theta_i++) {
       const theta = Math.PI * 2 * theta_i / theta_resolution
+      
       let z_real = 0
       let z_imaginary = 0
-      for (const k in curve_1.magnitude_coefficients) {
-        const magnitude_coefficient = (1 - lerp_t) * curve_1.magnitude_coefficients[k] + lerp_t * curve_2.magnitude_coefficients[k]
-        const angle_coefficient = (1 - lerp_t) * curve_1.angle_coefficients[k] + lerp_t * curve_2.angle_coefficients[k]
+      for (const k in point_1.magnitude_coefficients) {
+        // Use the points as control points of a cubic b-spline
+        const m_p1 = point_1.magnitude_coefficients[k]
+        const m_p2 = point_2.magnitude_coefficients[k]
+        const m_p3 = point_3.magnitude_coefficients[k]
+        const m_p4 = point_4.magnitude_coefficients[k]
+        const magnitude_coefficient = ((m_p1 + 4*m_p2 + m_p3) + t*(-3*m_p1 + 3*m_p3) + 
+                                       t_2*(3*m_p1 - 6*m_p2 + 3*m_p3) + t_3*(-1*m_p1 + 3*m_p2 - 3*m_p3 + m_p4)) / 6
+        const a_p1 = point_1.angle_coefficients[k]
+        const a_p2 = point_2.angle_coefficients[k]
+        const a_p3 = point_3.angle_coefficients[k]
+        const a_p4 = point_4.angle_coefficients[k]
+        const angle_coefficient = ((a_p1 + 4*a_p2 + a_p3) + t*(-3*a_p1 + 3*a_p3) + 
+                                       t_2*(3*a_p1 - 6*a_p2 + 3*a_p3) + t_3*(-1*a_p1 + 3*a_p2 - 3*a_p3 + a_p4)) / 6
         z_real += (magnitude_coefficient * Math.cos(angle_coefficient * theta))
         z_imaginary += (magnitude_coefficient * Math.sin(angle_coefficient * theta))
       }
