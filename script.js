@@ -9,6 +9,14 @@ function gaussianRandom(mean=0, stdev=1) {
   return z * stdev + mean;
 }
 
+// Random integer between two numbers, inclusive
+// Adapted from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random#getting_a_random_integer_between_two_values
+function integerRandom(min, max) {
+    min = Math.ceil(min)
+    max = Math.floor(max)
+    return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
 function makeCurve(steps, dimensions, decay) {
   // Calculate coefficients for curve
   const magnitude_coefficients = []
@@ -31,9 +39,11 @@ function main() {
   ctx.translate(width / 2, height / 2);
 
   // Set parameters of curve
-  const dimensions = 5
-  const steps = 2  //10
-  const decay = 1.5 //1.1
+  const dimensions = integerRandom(3, 10)
+  const steps = 2
+  const decay = 1.5
+  
+  console.info({dimensions, steps})
   
   // Set reslution of drawing
   const theta_resolution = 2000  // number of straight line segments approximating the curve
